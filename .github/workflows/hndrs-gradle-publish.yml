@@ -1,4 +1,4 @@
-name: check
+name: gradle
 
 # Controls when the action will run.
 on:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
