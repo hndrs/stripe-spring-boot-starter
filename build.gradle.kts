@@ -40,6 +40,7 @@ sonarqube {
         property("sonar.projectKey", "hndrs_stripe-spring-boot-starter")
         property("sonar.organization", "hndrs")
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.exclusions", "**/sample/**")
     }
 }
 

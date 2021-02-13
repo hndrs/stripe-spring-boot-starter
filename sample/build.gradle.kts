@@ -11,3 +11,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.stripe:stripe-java:20.37.0")
 }
+
+sonarqube {
+    isSkipProject = true
+}
