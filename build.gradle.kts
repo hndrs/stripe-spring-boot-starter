@@ -35,14 +35,6 @@ repositories {
     mavenCentral()
 }
 
-sonarqube {
-    properties {
-        property("sonar.projectKey", "hndrs_stripe-spring-boot-starter")
-        property("sonar.organization", "hndrs")
-        property("sonar.host.url", "https://sonarcloud.io")
-    }
-}
-
 subprojects {
     apply(plugin = "kotlin")
     apply(plugin = "java-library")
@@ -53,6 +45,13 @@ subprojects {
     apply(plugin = "propdeps-idea")
     apply(plugin = "jacoco")
 
+    sonarqube {
+        properties {
+            property("sonar.projectKey", "hndrs_stripe-spring-boot-starter")
+            property("sonar.organization", "hndrs")
+            property("sonar.host.url", "https://sonarcloud.io")
+        }
+    }
 
     configure<JacocoPluginExtension> {
         toolVersion = "0.8.6"
