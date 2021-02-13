@@ -51,6 +51,21 @@ subprojects {
     apply(plugin = "kotlin-kapt")
     apply(plugin = "propdeps")
     apply(plugin = "propdeps-idea")
+    apply(plugin = "jacoco")
+
+
+    configure<JacocoPluginExtension> {
+        toolVersion = "0.8.6"
+    }
+
+    tasks.withType<JacocoReport> {
+        reports {
+            xml.apply {
+                isEnabled = true
+            }
+
+        }
+    }
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {

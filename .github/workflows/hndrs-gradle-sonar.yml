@@ -1,4 +1,4 @@
-name: check
+name: analyse
 
 # Controls when the action will run.
 on:
@@ -44,7 +44,7 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
-      - name: analyze
+      - name: analyse
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
