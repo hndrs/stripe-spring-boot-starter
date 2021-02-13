@@ -17,6 +17,7 @@ val springBootDependencies: String by extra
 val kotlinVersion: String by extra
 
 plugins {
+    id("org.sonarqube").version("3.1.1")
     id("io.spring.dependency-management")
     kotlin("jvm")
     kotlin("plugin.spring")
@@ -27,11 +28,19 @@ plugins {
 
 group = "io.hndrs"
 version = "1.0.0"
-java.sourceCompatibility = JavaVersion.VERSION_15
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 
 repositories {
     mavenCentral()
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "hndrs_stripe-spring-boot-starter")
+        property("sonar.organization", "hndrs")
+        property("sonar.host.url", "https://sonarcloud.io")
+    }
 }
 
 subprojects {
@@ -46,7 +55,7 @@ subprojects {
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
-            jvmTarget = "15"
+            jvmTarget = "11"
         }
     }
 
