@@ -7,8 +7,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":"))
-    implementation("org.springframework.boot:spring-boot-starter")
-    api("org.jetbrains.kotlin:kotlin-reflect")
-    api("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation(project(":starter"))
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("com.stripe:stripe-java:20.37.0")
 }
