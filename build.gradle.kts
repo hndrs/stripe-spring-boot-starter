@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+
 buildscript {
     repositories {
         mavenCentral()
@@ -12,17 +13,20 @@ buildscript {
 apply(plugin = "propdeps")
 apply(plugin = "propdeps-idea")
 
+val springBootDependencies: String by extra
+val kotlinVersion: String by extra
+
 plugins {
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    kotlin("jvm") version "1.4.30"
-    kotlin("plugin.spring") version "1.4.30"
-    kotlin("kapt").version("1.4.30")
+    id("io.spring.dependency-management")
+    kotlin("jvm")
+    kotlin("plugin.spring")
+    kotlin("kapt")
     id("maven-publish")
     id("idea")
 }
 
 group = "io.hndrs"
-version = "1.0.1"
+version = "1.0.0"
 java.sourceCompatibility = JavaVersion.VERSION_15
 
 
@@ -60,8 +64,8 @@ subprojects {
             cacheChangingModulesFor(0, "seconds")
         }
         imports {
-            mavenBom("org.springframework.boot:spring-boot-dependencies:2.4.2") {
-                bomProperty("kotlin.version", "1.4.30")
+            mavenBom("org.springframework.boot:spring-boot-dependencies:$springBootDependencies") {
+                bomProperty("kotlin.version", kotlinVersion)
             }
         }
     }
