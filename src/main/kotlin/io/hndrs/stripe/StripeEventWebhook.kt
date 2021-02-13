@@ -5,14 +5,12 @@ import com.stripe.model.Event
 import com.stripe.model.StripeObject
 import com.stripe.net.Webhook
 import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationContext
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.context.WebApplicationContext
 
 @RestController
 class StripeEventWebhook(
@@ -24,13 +22,11 @@ class StripeEventWebhook(
         private val LOG = LoggerFactory.getLogger(StripeEventWebhook::class.java)
     }
 
-    @PostMapping("/stripe-events")
+    @PostMapping("\${hndrs.stripe.webhook-path}")
     fun stripeEvents(
         @RequestHeader httpHeaders: HttpHeaders,
         @RequestBody body: String
     ): ResponseEntity<String> {
-
-        LOG.info("Events Callback {}\n{}", httpHeaders, body)
 
         val sigHeader = httpHeaders["stripe-signature"]?.firstOrNull().orEmpty()
 
@@ -55,15 +51,15 @@ class StripeEventWebhook(
 
             Event.CHARSET
             stripeEventHandlers.stream()
-                .filter { stripeEvent ->
-                    stripeEvent.supports(
-                        stripeObject.javaClass,
-                        event.type,
-                        event.data.previousAttributes
-                    )
-                }
-                .forEach { stripeEvent ->
-                    stripeEvent.onReceive(stripeObject)
+                .forEach { eventHandler ->
+                    println(eventHandler::class.java.canonicalName)
+                    try {
+                        if (eventHandler.supports(stripeObject.javaClass, event.type, event.data.previousAttributes)) {
+                            eventHandler.onReceive(stripeObject)
+                        }
+                    } catch (e: Exception) {
+                        LOG.error("Error while executing {}", eventHandler::class.java.canonicalName)
+                    }
                 }
         }
 

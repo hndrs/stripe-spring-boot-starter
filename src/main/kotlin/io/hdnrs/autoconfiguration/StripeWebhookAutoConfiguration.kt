@@ -17,7 +17,10 @@ class StripeWebhookAutoConfiguration(private val properties: StripeConfiguration
 
     @Bean
     fun stripeEventWebhook(stripeEventHandlers: List<StripeEventHandler<*>>): StripeEventWebhook {
-        return StripeEventWebhook(stripeEventHandlers as List<StripeEventHandler<StripeObject>>, properties.signingSecret)
+        return StripeEventWebhook(
+            stripeEventHandlers as List<StripeEventHandler<StripeObject>>,
+            properties.signingSecret
+        )
     }
 
 }
@@ -26,6 +29,8 @@ class StripeWebhookAutoConfiguration(private val properties: StripeConfiguration
 class StripeConfigurationProperties {
 
     lateinit var signingSecret: String
+
+    lateinit var webhookPath: String
 
     companion object {
         const val PROPERTY_PREFIX = "hndrs.stripe"
