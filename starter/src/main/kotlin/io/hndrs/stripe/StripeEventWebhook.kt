@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 class StripeEventWebhook(
     private val stripeEventHandlers: List<StripeEventHandler<StripeObject>>,
     private val signingSecret: String,
+    private val eventBuilder: StripeEventBuilder = StripeEventBuilder(),
 ) {
 
     companion object {
@@ -32,7 +33,7 @@ class StripeEventWebhook(
 
         // verify signing secret and construct event
         val event = try {
-            Webhook.constructEvent(
+            eventBuilder.constructEvent(
                 body, sigHeader, signingSecret
             )
         } catch (e: SignatureVerificationException) {
@@ -45,25 +46,34 @@ class StripeEventWebhook(
         }
 
         // handle the event
-        event?.let {
 
-            val stripeObject = event.dataObjectDeserializer.deserializeUnsafe()
+        val stripeObject = event.dataObjectDeserializer.deserializeUnsafe()
 
-            Event.CHARSET
-            stripeEventHandlers.stream()
-                .forEach { eventHandler ->
-                    println(eventHandler::class.java.canonicalName)
-                    try {
-                        if (eventHandler.supports(stripeObject.javaClass, event.type, event.data.previousAttributes)) {
-                            eventHandler.onReceive(stripeObject)
-                        }
-                    } catch (e: Exception) {
-                        LOG.error("Error while executing {}", eventHandler::class.java.canonicalName)
+        stripeEventHandlers.stream()
+            .forEach { eventHandler ->
+                try {
+                    if (eventHandler.supports(stripeObject.javaClass, event.type, event.data.previousAttributes)) {
+                        eventHandler.onReceive(stripeObject)
                     }
+                } catch (e: Exception) {
+                    LOG.error("Error while executing {}", eventHandler::class.java.canonicalName)
                 }
-        }
+            }
+
 
         return ResponseEntity.ok(body)
+    }
+}
+
+/**
+ * Delegate class introduced to give the possiblibity to test [StripeEventWebhook]
+ */
+class StripeEventBuilder() {
+
+    fun constructEvent(payload: String, signature: String, signingSecret: String): Event {
+        return Webhook.constructEvent(
+            payload, signature, signingSecret
+        )
     }
 }
 

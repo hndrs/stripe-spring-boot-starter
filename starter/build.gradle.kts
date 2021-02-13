@@ -11,4 +11,5 @@ dependencies {
     kapt(group = "org.springframework.boot", name = "spring-boot-configuration-processor")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("com.ninja-squad:springmockk:3.0.1")
 }
