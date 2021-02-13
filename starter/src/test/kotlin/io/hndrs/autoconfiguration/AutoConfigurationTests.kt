@@ -1,6 +1,7 @@
 package io.hndrs.autoconfiguration
 
 import io.hdnrs.autoconfiguration.StripeWebhookAutoConfiguration
+import io.hndrs.stripe.StripeEventWebhook
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -18,7 +19,7 @@ class StripeWebhookAutoConfigurationTests {
             )
             .withPropertyValues("hndrs.stripe.signing-secret:testSecret", "hndrs.stripe.webhook-path:/events")
             .run {
-                Assertions.assertNotNull(it.getBean(StripeWebhookAutoConfiguration::class.java))
+                Assertions.assertNotNull(it.getBean(StripeEventWebhook::class.java))
             }
     }
 }
