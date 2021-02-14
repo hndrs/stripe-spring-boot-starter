@@ -2,6 +2,7 @@ package io.hndrs.stripe
 
 import com.stripe.exception.SignatureVerificationException
 import com.stripe.model.Event
+import com.stripe.model.EventData
 import com.stripe.model.EventDataObjectDeserializer
 import com.stripe.model.Invoice
 import com.stripe.model.StripeObject
@@ -11,6 +12,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -130,16 +132,34 @@ internal class StripeEventWebhookTest {
         assertFalse(previousAttribuesCheck.exectuedOnReceive)
     }
 
+    @DisplayName("On Receive Method Called")
+    @Test
+    fun onReceiveExectuted() {
+        every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
 
-    private fun mockkEvent(stripeObject: StripeObject, type: String? = null): Event {
+        val baseHandler = BaseHandler()
+
+        assertEquals(
+            ResponseEntity.ok(TEST_BODY),
+            testWebHook(baseHandler).stripeEvents(HttpHeaders(), TEST_BODY)
+        )
+        assertTrue(baseHandler.exectuedOnReceive)
+    }
+
+    private fun mockkEvent(
+        stripeObject: StripeObject,
+        type: String = "anyType",
+        previousAttributes: Map<String, Any> = mapOf()
+    ): Event {
 
         val event = mockk<Event>()
         val deserializer = mockk<EventDataObjectDeserializer>()
+        val data = mockk<EventData>() {}
         every { event.dataObjectDeserializer } returns deserializer
-        every<StripeObject?> { deserializer.deserializeUnsafe() } returns stripeObject
-        type?.let {
-            every { event.type } returns it
-        }
+        every { deserializer.deserializeUnsafe() } returns stripeObject
+        every { event.type } returns type
+        every { event.data } returns data
+        every { data.previousAttributes } returns previousAttributes
         return event
     }
 
@@ -193,6 +213,15 @@ internal class StripeEventWebhookTest {
         override fun onReceive(stripeObject: Subscription) {
             exectuedOnReceive = true
         }
+    }
+
+    class BaseHandler : StripeEventHandler<Subscription>(Subscription::class.java) {
+        var exectuedOnReceive: Boolean = false
+
+        override fun onReceive(stripeObject: Subscription) {
+            exectuedOnReceive = true
+        }
+
     }
 
 }
