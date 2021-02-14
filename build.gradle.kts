@@ -24,6 +24,7 @@ plugins {
     kotlin("kapt")
     id("maven-publish")
     id("idea")
+    id("signing")
 }
 
 group = "io.hndrs"
@@ -53,6 +54,8 @@ subprojects {
     apply(plugin = "propdeps")
     apply(plugin = "propdeps-idea")
     apply(plugin = "jacoco")
+    apply(plugin = "maven-publish")
+    apply(plugin = "signing")
 
     configure<JacocoPluginExtension> {
         toolVersion = "0.8.6"
@@ -93,11 +96,44 @@ subprojects {
             }
         }
     }
-}
 
-val sourcesJarSubProject by tasks.creating(Jar::class) {
-    dependsOn("classes")
-    archiveClassifier.set("sources")
-    from(sourceSets["main"].allSource)
+    val sourcesJarSubProject by tasks.creating(Jar::class) {
+        dependsOn("classes")
+        archiveClassifier.set("sources")
+        from(sourceSets["main"].allSource)
+    }
+    if (project.name != "sample") {
+
+        publishing {
+            repositories {
+                maven {
+                    name = "release"
+                    url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+                    credentials {
+                        username = System.getenv("SONATYPE_USER")
+                        password = System.getenv("SONATYPE_PASSWORD")
+                    }
+                }
+            }
+            publications {
+                create<MavenPublication>(project.name) {
+                    from(components["java"])
+                    artifact(sourcesJarSubProject)
+
+                    groupId = rootProject.group as? String
+                    artifactId = rootProject.name
+                    version = "${rootProject.version}${project.findProperty("version.appendix") ?: ""}"
+                }
+            }
+            val signingKey: String? = System.getenv("SIGNING_KEY")
+            val signingPassword: String? = System.getenv("SIGNING_PASSWORD")
+            if (signingKey != null && signingPassword != null) {
+                signing {
+                    useInMemoryPgpKeys(groovy.json.StringEscapeUtils.unescapeJava(signingKey), signingPassword)
+                    sign(publications[project.name])
+                }
+            }
+        }
+    }
 }
 
