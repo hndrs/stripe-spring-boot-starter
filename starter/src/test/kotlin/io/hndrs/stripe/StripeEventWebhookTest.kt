@@ -3,12 +3,14 @@ package io.hndrs.stripe
 import com.stripe.exception.SignatureVerificationException
 import com.stripe.model.Event
 import com.stripe.model.EventDataObjectDeserializer
+import com.stripe.model.Invoice
 import com.stripe.model.StripeObject
 import com.stripe.model.Subscription
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -43,7 +45,7 @@ internal class StripeEventWebhookTest {
             "sigheader"
         )
 
-        Assertions.assertEquals(
+        assertEquals(
             ResponseEntity.badRequest().body("Signature Verification failed"),
             testWebHook().stripeEvents(HttpHeaders(), TEST_BODY)
         )
@@ -54,7 +56,7 @@ internal class StripeEventWebhookTest {
     fun anyOtherException() {
         every { eventBuilder.constructEvent(any(), any(), any()) } throws IllegalStateException()
 
-        Assertions.assertEquals(
+        assertEquals(
             ResponseEntity.badRequest().body("Event handling failed"),
             testWebHook().stripeEvents(HttpHeaders(), TEST_BODY)
         )
@@ -65,10 +67,13 @@ internal class StripeEventWebhookTest {
     fun exceptionDuringSupportsCheck() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
 
-        Assertions.assertEquals(
+        val throwsOnSupport = ThrowsOnSupport()
+
+        assertEquals(
             ResponseEntity.ok(TEST_BODY),
-            testWebHook(ThrowsOnSupport()).stripeEvents(HttpHeaders(), TEST_BODY)
+            testWebHook(throwsOnSupport).stripeEvents(HttpHeaders(), TEST_BODY)
         )
+        assertFalse(throwsOnSupport.exectuedOnReceive, "onReceive was executed")
     }
 
     @DisplayName("Any exception during onReceive call")
@@ -76,37 +81,118 @@ internal class StripeEventWebhookTest {
     fun exceptionDuringOnReceiveCall() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
 
-        Assertions.assertEquals(
+        assertEquals(
             ResponseEntity.ok(TEST_BODY),
             testWebHook(ThrowsOnReceive()).stripeEvents(HttpHeaders(), TEST_BODY)
         )
     }
 
-    private fun mockkEvent(stripeObject: StripeObject): Event {
+    @DisplayName("Event Class Not Supported")
+    @Test
+    fun doesNotSupportsEventClass() {
+        every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
+        val invoiceEventHandler = InvoiceEventHandler()
+
+        assertEquals(
+            ResponseEntity.ok(TEST_BODY),
+            testWebHook(invoiceEventHandler).stripeEvents(HttpHeaders(), TEST_BODY)
+        )
+        assertFalse(invoiceEventHandler.exectuedOnReceive)
+    }
+
+    @DisplayName("Event Type Not Supported")
+    @Test
+    fun doesNotSupportsEventType() {
+        val eventType = "someEventType"
+        val otherEventType = "someOtherEventType"
+        every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>(), eventType)
+
+        val eventTypeHandler = EventTypeHandler(otherEventType)
+
+        assertEquals(
+            ResponseEntity.ok(TEST_BODY),
+            testWebHook(eventTypeHandler).stripeEvents(HttpHeaders(), TEST_BODY)
+        )
+        assertFalse(eventTypeHandler.exectuedOnReceive)
+    }
+
+    @DisplayName("Previous Attributes Not Supported")
+    @Test
+    fun doesNotSupportsPreviousAttribues() {
+        every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
+
+        val previousAttribuesCheck = PreviousAttribuesCheck()
+
+        assertEquals(
+            ResponseEntity.ok(TEST_BODY),
+            testWebHook(previousAttribuesCheck).stripeEvents(HttpHeaders(), TEST_BODY)
+        )
+        assertFalse(previousAttribuesCheck.exectuedOnReceive)
+    }
+
+
+    private fun mockkEvent(stripeObject: StripeObject, type: String? = null): Event {
 
         val event = mockk<Event>()
         val deserializer = mockk<EventDataObjectDeserializer>()
         every { event.dataObjectDeserializer } returns deserializer
         every<StripeObject?> { deserializer.deserializeUnsafe() } returns stripeObject
-
+        type?.let {
+            every { event.type } returns it
+        }
         return event
     }
 
     class ThrowsOnSupport : StripeEventHandler<Subscription>(Subscription::class.java) {
+
+        var exectuedOnReceive: Boolean = false
 
         override fun supports(eventType: String): Boolean {
             throw IllegalStateException()
         }
 
         override fun onReceive(stripeObject: Subscription) {
-            // do nothing
+            exectuedOnReceive = true
         }
     }
 
     class ThrowsOnReceive : StripeEventHandler<Subscription>(Subscription::class.java) {
-
         override fun onReceive(stripeObject: Subscription) {
             throw IllegalStateException()
         }
     }
+
+    class InvoiceEventHandler : StripeEventHandler<Invoice>(Invoice::class.java) {
+        var exectuedOnReceive: Boolean = false
+        override fun onReceive(stripeObject: Invoice) {
+            exectuedOnReceive = true
+        }
+    }
+
+    class EventTypeHandler(private val eventType: String) : StripeEventHandler<Subscription>(Subscription::class.java) {
+
+        var exectuedOnReceive: Boolean = false
+
+        override fun supports(eventType: String): Boolean {
+            return eventType == this.eventType
+        }
+
+        override fun onReceive(stripeObject: Subscription) {
+            exectuedOnReceive = true
+        }
+    }
+
+    class PreviousAttribuesCheck : StripeEventHandler<Subscription>(Subscription::class.java) {
+
+        var exectuedOnReceive: Boolean = false
+
+        override fun supports(previousAttributes: Map<String, Any>): Boolean {
+            return false
+        }
+
+        override fun onReceive(stripeObject: Subscription) {
+            exectuedOnReceive = true
+        }
+    }
+
 }
