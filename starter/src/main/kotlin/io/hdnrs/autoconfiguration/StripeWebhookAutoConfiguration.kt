@@ -1,9 +1,11 @@
 package io.hdnrs.autoconfiguration
 
+import com.stripe.Stripe
 import com.stripe.model.StripeObject
 import io.hdnrs.autoconfiguration.StripeConfigurationProperties.Companion.PROPERTY_PREFIX
 import io.hndrs.stripe.StripeEventReceiver
 import io.hndrs.stripe.StripeEventWebhook
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -14,7 +16,7 @@ import org.springframework.context.annotation.Configuration
 @ConditionalOnWebApplication
 @EnableConfigurationProperties(StripeConfigurationProperties::class)
 @Configuration
-//TODO add conditional on stripe java library
+@ConditionalOnClass(Stripe::class)
 open class StripeWebhookAutoConfiguration(private val properties: StripeConfigurationProperties) {
 
 
