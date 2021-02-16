@@ -1,5 +1,6 @@
 package io.hndrs.stripe
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.stripe.exception.SignatureVerificationException
 import com.stripe.model.Event
 import com.stripe.model.StripeObject
@@ -69,7 +70,13 @@ class StripeEventWebhook(
     }
 }
 
-data class HandlerExecution(val name: String, val result: Any?, val exceptionMessage: String?) {
+data class HandlerExecution(
+    @field:JsonProperty("name")
+    val name: String,
+    @field:JsonProperty("result")
+    val result: Any?,
+    @field:JsonProperty("exceptionMessage")
+    val exceptionMessage: String?) {
 
     companion object {
         fun of(
