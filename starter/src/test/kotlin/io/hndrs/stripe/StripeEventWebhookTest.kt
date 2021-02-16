@@ -28,9 +28,9 @@ internal class StripeEventWebhookTest {
         private const val TEST_BODY = ""
     }
 
-    private fun testWebHook(stripeEventHandler: StripeEventHandler<*>? = null): StripeEventWebhook {
-        return stripeEventHandler?.let {
-            StripeEventWebhook(listOf(stripeEventHandler as StripeEventHandler<StripeObject>), "", eventBuilder)
+    private fun testWebHook(stripeEventReceiver: StripeEventReceiver<*>? = null): StripeEventWebhook {
+        return stripeEventReceiver?.let {
+            StripeEventWebhook(listOf(stripeEventReceiver as StripeEventReceiver<StripeObject>), "", eventBuilder)
         } ?: StripeEventWebhook(listOf(), "", eventBuilder)
     }
 
@@ -73,7 +73,7 @@ internal class StripeEventWebhookTest {
         val throwsOnSupport = ThrowsOnSupport(ex)
 
         assertEquals(
-            ResponseEntity.ok(listOf(HandlerExecution(ThrowsOnSupport::class.simpleName!!, null, ex.message))),
+            ResponseEntity.ok(listOf(ReceiverExecution(ThrowsOnSupport::class.simpleName!!, null, ex.message))),
             testWebHook(throwsOnSupport).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertFalse(throwsOnSupport.exectuedOnReceive, "onReceive was executed")
@@ -88,7 +88,7 @@ internal class StripeEventWebhookTest {
         assertEquals(
             ResponseEntity.ok(
                 listOf(
-                    HandlerExecution(
+                    ReceiverExecution(
                         ThrowsOnReceive::class.simpleName!!,
                         null,
                         ex.message
@@ -103,10 +103,10 @@ internal class StripeEventWebhookTest {
     @Test
     fun doesNotSupportsEventClass() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
-        val invoiceEventHandler = InvoiceEventHandler()
+        val invoiceEventHandler = InvoiceEventReceiver()
 
         assertEquals(
-            ResponseEntity.ok(listOf<HandlerExecution>()),
+            ResponseEntity.ok(listOf<ReceiverExecution>()),
             testWebHook(invoiceEventHandler).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertFalse(invoiceEventHandler.exectuedOnReceive)
@@ -119,10 +119,10 @@ internal class StripeEventWebhookTest {
         val otherEventType = "someOtherEventType"
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>(), eventType)
 
-        val eventTypeHandler = EventTypeHandler(otherEventType)
+        val eventTypeHandler = EventTypeReceiver(otherEventType)
 
         assertEquals(
-            ResponseEntity.ok(listOf<HandlerExecution>()),
+            ResponseEntity.ok(listOf<ReceiverExecution>()),
             testWebHook(eventTypeHandler).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertFalse(eventTypeHandler.exectuedOnReceive)
@@ -136,7 +136,7 @@ internal class StripeEventWebhookTest {
         val previousAttribuesCheck = PreviousAttribuesCheck()
 
         assertEquals(
-            ResponseEntity.ok(listOf<HandlerExecution>()),
+            ResponseEntity.ok(listOf<ReceiverExecution>()),
             testWebHook(previousAttribuesCheck).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertFalse(previousAttribuesCheck.exectuedOnReceive)
@@ -147,10 +147,10 @@ internal class StripeEventWebhookTest {
     fun onReceiveExectuted() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
 
-        val baseHandler = BaseHandler()
+        val baseHandler = BaseReceiver()
 
         assertEquals(
-            ResponseEntity.ok(listOf(HandlerExecution("BaseHandler", Unit, null))),
+            ResponseEntity.ok(listOf(ReceiverExecution("BaseHandler", Unit, null))),
             testWebHook(baseHandler).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertTrue(baseHandler.exectuedOnReceive)
@@ -173,7 +173,7 @@ internal class StripeEventWebhookTest {
         return event
     }
 
-    class ThrowsOnSupport(private val ex: Exception) : StripeEventHandler<Subscription>(Subscription::class.java) {
+    class ThrowsOnSupport(private val ex: Exception) : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
         var exectuedOnReceive: Boolean = false
 
@@ -186,20 +186,20 @@ internal class StripeEventWebhookTest {
         }
     }
 
-    class ThrowsOnReceive(private val ex: Exception) : StripeEventHandler<Subscription>(Subscription::class.java) {
+    class ThrowsOnReceive(private val ex: Exception) : StripeEventReceiver<Subscription>(Subscription::class.java) {
         override fun onReceive(stripeObject: Subscription) {
             throw ex
         }
     }
 
-    class InvoiceEventHandler : StripeEventHandler<Invoice>(Invoice::class.java) {
+    class InvoiceEventReceiver : StripeEventReceiver<Invoice>(Invoice::class.java) {
         var exectuedOnReceive: Boolean = false
         override fun onReceive(stripeObject: Invoice) {
             exectuedOnReceive = true
         }
     }
 
-    class EventTypeHandler(private val eventType: String) : StripeEventHandler<Subscription>(Subscription::class.java) {
+    class EventTypeReceiver(private val eventType: String) : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
         var exectuedOnReceive: Boolean = false
 
@@ -212,7 +212,7 @@ internal class StripeEventWebhookTest {
         }
     }
 
-    class PreviousAttribuesCheck : StripeEventHandler<Subscription>(Subscription::class.java) {
+    class PreviousAttribuesCheck : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
         var exectuedOnReceive: Boolean = false
 
@@ -225,7 +225,7 @@ internal class StripeEventWebhookTest {
         }
     }
 
-    class BaseHandler : StripeEventHandler<Subscription>(Subscription::class.java) {
+    class BaseReceiver : StripeEventReceiver<Subscription>(Subscription::class.java) {
         var exectuedOnReceive: Boolean = false
 
         override fun onReceive(stripeObject: Subscription) {

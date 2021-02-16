@@ -2,7 +2,7 @@ package io.hdnrs.autoconfiguration
 
 import com.stripe.model.StripeObject
 import io.hdnrs.autoconfiguration.StripeConfigurationProperties.Companion.PROPERTY_PREFIX
-import io.hndrs.stripe.StripeEventHandler
+import io.hndrs.stripe.StripeEventReceiver
 import io.hndrs.stripe.StripeEventWebhook
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -14,13 +14,14 @@ import org.springframework.context.annotation.Configuration
 @ConditionalOnWebApplication
 @EnableConfigurationProperties(StripeConfigurationProperties::class)
 @Configuration
+//TODO add conditional on stripe java library
 open class StripeWebhookAutoConfiguration(private val properties: StripeConfigurationProperties) {
 
 
     @Bean
-    open fun stripeEventWebhook(stripeEventHandlers: List<StripeEventHandler<*>>): StripeEventWebhook {
+    open fun stripeEventWebhook(stripeEventReceivers: List<StripeEventReceiver<*>>): StripeEventWebhook {
         return StripeEventWebhook(
-            stripeEventHandlers as List<StripeEventHandler<StripeObject>>,
+            stripeEventReceivers as List<StripeEventReceiver<StripeObject>>,
             properties.signingSecret
         )
     }

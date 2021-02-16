@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
 
 @RestController
 class StripeEventWebhook(
-    private val stripeEventHandlers: List<StripeEventHandler<StripeObject>>,
+    private val stripeEventReceivers: List<StripeEventReceiver<StripeObject>>,
     private val signingSecret: String,
     private val eventBuilder: StripeEventBuilder = StripeEventBuilder(),
 ) {
@@ -51,7 +51,7 @@ class StripeEventWebhook(
         val results = mutableMapOf<KClass<*>, Any?>()
 
         val stripeObject = event.dataObjectDeserializer.deserializeUnsafe()
-        stripeEventHandlers.stream()
+        stripeEventReceivers.stream()
             .forEach { eventHandler ->
                 try {
                     if (eventHandler.supports(stripeObject.javaClass, event.type, event.data.previousAttributes)) {
@@ -65,12 +65,12 @@ class StripeEventWebhook(
             }
 
         return ResponseEntity.ok(
-            HandlerExecution.of(results, exceptions)
+            ReceiverExecution.of(results, exceptions)
         )
     }
 }
 
-data class HandlerExecution(
+data class ReceiverExecution(
     @field:JsonProperty("name")
     val name: String,
     @field:JsonProperty("result")
@@ -82,11 +82,11 @@ data class HandlerExecution(
         fun of(
             results: MutableMap<KClass<*>, Any?>,
             exceptions: MutableMap<KClass<*>, Exception>
-        ): List<HandlerExecution> {
+        ): List<ReceiverExecution> {
             return (results.keys + exceptions.keys)
                 .map {
                     val name = it.simpleName ?: "Anonymous"
-                    HandlerExecution(name, results[it], exceptions[it]?.message)
+                    ReceiverExecution(name, results[it], exceptions[it]?.message)
                 }
         }
     }
@@ -104,7 +104,7 @@ class StripeEventBuilder() {
     }
 }
 
-abstract class StripeEventHandler<in T : StripeObject>(private val clazz: Class<T>) {
+abstract class StripeEventReceiver<in T : StripeObject>(private val clazz: Class<T>) {
 
     /**
      * Set if handler should only be executed for a specifc event type
