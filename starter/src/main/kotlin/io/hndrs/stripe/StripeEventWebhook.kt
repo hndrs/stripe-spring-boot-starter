@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RestController
+import kotlin.reflect.KClass
 
 @RestController
 class StripeEventWebhook(
@@ -27,7 +28,7 @@ class StripeEventWebhook(
     fun stripeEvents(
         @RequestHeader httpHeaders: HttpHeaders,
         @RequestBody body: String
-    ): ResponseEntity<String> {
+    ): ResponseEntity<*> {
 
         val sigHeader = httpHeaders["stripe-signature"]?.firstOrNull().orEmpty()
 
@@ -45,23 +46,42 @@ class StripeEventWebhook(
             return ResponseEntity.badRequest().body("Event handling failed")
         }
 
-        // handle the event
+        val exceptions = mutableMapOf<KClass<*>, Exception>()
+        val results = mutableMapOf<KClass<*>, Any?>()
 
         val stripeObject = event.dataObjectDeserializer.deserializeUnsafe()
-
         stripeEventHandlers.stream()
             .forEach { eventHandler ->
                 try {
                     if (eventHandler.supports(stripeObject.javaClass, event.type, event.data.previousAttributes)) {
-                        eventHandler.onReceive(stripeObject)
+                        val result = eventHandler.onReceive(stripeObject)
+                        results[eventHandler::class] = result
                     }
                 } catch (e: Exception) {
+                    exceptions[eventHandler::class] = e
                     LOG.error("Error while executing {}", eventHandler::class.java.canonicalName)
                 }
             }
 
+        return ResponseEntity.ok(
+            HandlerExecution.of(results, exceptions)
+        )
+    }
+}
 
-        return ResponseEntity.ok(body)
+data class HandlerExecution(val name: String, val result: Any?, val exceptionMessage: String?) {
+
+    companion object {
+        fun of(
+            results: MutableMap<KClass<*>, Any?>,
+            exceptions: MutableMap<KClass<*>, Exception>
+        ): List<HandlerExecution> {
+            return (results.keys + exceptions.keys)
+                .map {
+                    val name = it.simpleName ?: "Anonymous"
+                    HandlerExecution(name, results[it], exceptions[it]?.message)
+                }
+        }
     }
 }
 
@@ -102,6 +122,6 @@ abstract class StripeEventHandler<in T : StripeObject>(private val clazz: Class<
                 && supports(previousAttributes)
     }
 
-    abstract fun onReceive(stripeObject: T)
+    abstract fun onReceive(stripeObject: T): Any?
 
 }

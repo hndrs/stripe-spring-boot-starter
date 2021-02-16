@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 
 @Component
 open class SampleHandler : StripeEventHandler<Subscription>(Subscription::class.java) {
+
     override fun onReceive(stripeObject: Subscription) {
         //do something with received object
         println(stripeObject)
