@@ -11,7 +11,7 @@ val springBootDependencies: String by settings
 pluginManagement {
     val kotlinVersion: String by settings
     val springDependencyManagement: String by settings
-    println("Settings ${settings.extra.properties}")
+
     plugins {
         id("io.spring.dependency-management").version(springDependencyManagement)
         kotlin("jvm").version(kotlinVersion)
