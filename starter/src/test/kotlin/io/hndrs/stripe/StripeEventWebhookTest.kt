@@ -150,7 +150,7 @@ internal class StripeEventWebhookTest {
         val baseHandler = BaseReceiver()
 
         assertEquals(
-            ResponseEntity.ok(listOf(ReceiverExecution("BaseHandler", Unit, null))),
+            ResponseEntity.ok(listOf(ReceiverExecution(BaseReceiver::class.simpleName!!, Unit, null))),
             testWebHook(baseHandler).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertTrue(baseHandler.exectuedOnReceive)
@@ -177,7 +177,7 @@ internal class StripeEventWebhookTest {
 
         var exectuedOnReceive: Boolean = false
 
-        override fun supports(eventType: String): Boolean {
+        override fun onCondition(eventType: String): Boolean {
             throw ex
         }
 
@@ -199,11 +199,12 @@ internal class StripeEventWebhookTest {
         }
     }
 
-    class EventTypeReceiver(private val eventType: String) : StripeEventReceiver<Subscription>(Subscription::class.java) {
+    class EventTypeReceiver(private val eventType: String) :
+        StripeEventReceiver<Subscription>(Subscription::class.java) {
 
         var exectuedOnReceive: Boolean = false
 
-        override fun supports(eventType: String): Boolean {
+        override fun onCondition(eventType: String): Boolean {
             return eventType == this.eventType
         }
 
@@ -216,7 +217,7 @@ internal class StripeEventWebhookTest {
 
         var exectuedOnReceive: Boolean = false
 
-        override fun supports(previousAttributes: Map<String, Any>): Boolean {
+        override fun onCondition(previousAttributes: Map<String, Any>): Boolean {
             return false
         }
 

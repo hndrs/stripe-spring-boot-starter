@@ -54,7 +54,13 @@ class StripeEventWebhook(
         stripeEventReceivers.stream()
             .forEach { eventHandler ->
                 try {
-                    if (eventHandler.supports(stripeObject.javaClass, event.type, event.data.previousAttributes)) {
+                    if (eventHandler.onCondition(
+                            stripeObject.javaClass,
+                            event.type,
+                            event.data.previousAttributes,
+                            stripeObject
+                        )
+                    ) {
                         val result = eventHandler.onReceive(stripeObject)
                         results[eventHandler::class] = result
                     }
@@ -76,7 +82,8 @@ data class ReceiverExecution(
     @field:JsonProperty("result")
     val result: Any?,
     @field:JsonProperty("exceptionMessage")
-    val exceptionMessage: String?) {
+    val exceptionMessage: String?
+) {
 
     companion object {
         fun of(
@@ -95,7 +102,7 @@ data class ReceiverExecution(
 /**
  * Delegate class introduced to give the possiblibity to test [StripeEventWebhook]
  */
-class StripeEventBuilder() {
+class StripeEventBuilder {
 
     fun constructEvent(payload: String, signature: String, signingSecret: String): Event {
         return Webhook.constructEvent(
@@ -107,26 +114,42 @@ class StripeEventBuilder() {
 abstract class StripeEventReceiver<in T : StripeObject>(private val clazz: Class<T>) {
 
     /**
-     * Set if handler should only be executed for a specifc event type
+     * Conditional to execute [StripeEventReceiver][onReceive]
      */
-    open fun supports(eventType: String): Boolean {
+    open fun onCondition(eventType: String): Boolean {
         return true
     }
 
     /**
-     * Additional checks on previous attributes if handler should be executed
+     * Conditional to execute [StripeEventReceiver][onReceive]
      */
-    open fun supports(previousAttributes: Map<String, Any>): Boolean {
+    open fun onCondition(stripeObject: T): Boolean {
+        return true
+    }
+
+    /**
+     * Conditional to execute [StripeEventReceiver][onReceive]
+     */
+    open fun onCondition(previousAttributes: Map<String, Any>): Boolean {
+        return true
+    }
+
+    /**
+     * Conditional to execute [StripeEventReceiver][onReceive]
+     */
+    open fun onCondition(previousAttributes: Map<String, Any>, stripeObject: T): Boolean {
         return true
     }
 
     /**
      * internal support checks
      */
-    internal fun supports(type: Class<Any>, eventType: String, previousAttributes: Map<String, Any>): Boolean {
+    internal fun onCondition(type: Class<Any>, eventType: String, previousAttributes: Map<String, Any>, stripeObject: T): Boolean {
         return type == clazz
-                && supports(eventType)
-                && supports(previousAttributes)
+                && onCondition(eventType)
+                && onCondition(previousAttributes)
+                && onCondition(stripeObject)
+                && onCondition(previousAttributes, stripeObject)
     }
 
     abstract fun onReceive(stripeObject: T): Any?

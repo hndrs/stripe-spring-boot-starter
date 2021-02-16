@@ -10,15 +10,19 @@ open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::cla
 
     override fun onReceive(stripeObject: Subscription) {
         LOG.info("Received event {}", stripeObject)
+        stripeObject.toJson()
     }
 
-    override fun supports(eventType: String): Boolean {
+    override fun onCondition(eventType: String): Boolean {
         // check the event type
         return eventType == "customer.subscription.updated"
     }
 
+    override fun onCondition(previousAttributes: Map<String, Any>, stripeObject: Subscription): Boolean {
+        return true
+    }
 
-    override fun supports(previousAttributes: Map<String, Any>): Boolean {
+    override fun onCondition(previousAttributes: Map<String, Any>): Boolean {
         // possibility to check previous attributes to check if event should be handled
         return true
     }
