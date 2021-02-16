@@ -99,9 +99,9 @@ internal class StripeEventWebhookTest {
         )
     }
 
-    @DisplayName("Event Class Not Supported")
+    @DisplayName("onCondtion(Event Class)")
     @Test
-    fun doesNotSupportsEventClass() {
+    fun onConditionEventClass() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
         val invoiceEventHandler = InvoiceEventReceiver()
 
@@ -112,34 +112,62 @@ internal class StripeEventWebhookTest {
         assertFalse(invoiceEventHandler.exectuedOnReceive)
     }
 
-    @DisplayName("Event Type Not Supported")
+    @DisplayName("onCondtion(Event Type String)")
     @Test
-    fun doesNotSupportsEventType() {
+    fun onConditionEventType() {
         val eventType = "someEventType"
         val otherEventType = "someOtherEventType"
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>(), eventType)
 
-        val eventTypeHandler = EventTypeReceiver(otherEventType)
+        val testReceiver = TestReceiver(onConditionEventType = false)
 
         assertEquals(
             ResponseEntity.ok(listOf<ReceiverExecution>()),
-            testWebHook(eventTypeHandler).stripeEvents(HttpHeaders(), TEST_BODY)
+            testWebHook(testReceiver).stripeEvents(HttpHeaders(), TEST_BODY)
         )
-        assertFalse(eventTypeHandler.exectuedOnReceive)
+        assertFalse(testReceiver.exectuedOnReceive)
     }
 
-    @DisplayName("Previous Attributes Not Supported")
+    @DisplayName("onCondition(previousAttributes Map)")
     @Test
-    fun doesNotSupportsPreviousAttribues() {
+    fun onConditionPreviousAttributes() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
 
-        val previousAttribuesCheck = PreviousAttribuesCheck()
+        val testReceiver = TestReceiver(onConditionPreviousAttributes = false)
 
         assertEquals(
             ResponseEntity.ok(listOf<ReceiverExecution>()),
-            testWebHook(previousAttribuesCheck).stripeEvents(HttpHeaders(), TEST_BODY)
+            testWebHook(testReceiver).stripeEvents(HttpHeaders(), TEST_BODY)
         )
-        assertFalse(previousAttribuesCheck.exectuedOnReceive)
+        assertFalse(testReceiver.exectuedOnReceive)
+    }
+
+    @DisplayName("onCondition(stripeObject)")
+    @Test
+    fun onConditionStripeObject() {
+        every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
+
+        val testReceiver = TestReceiver(onConditionStripeObject = false)
+
+        assertEquals(
+            ResponseEntity.ok(listOf<ReceiverExecution>()),
+            testWebHook(testReceiver).stripeEvents(HttpHeaders(), TEST_BODY)
+        )
+        assertFalse(testReceiver.exectuedOnReceive)
+    }
+
+    @DisplayName("onCondition(previousAttributes Map ,stripeObject)")
+    @Test
+    fun onConditionPreviousAttributesAndStripeObject() {
+        every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
+
+        val testReceiver = TestReceiver(onConditionPreviousAttributesAndStripeObject = false)
+
+        assertEquals(
+            ResponseEntity.ok(listOf<ReceiverExecution>()),
+            testWebHook(testReceiver).stripeEvents(HttpHeaders(), TEST_BODY)
+        )
+        assertFalse(testReceiver.exectuedOnReceive)
     }
 
     @DisplayName("On Receive Method Called")
@@ -147,10 +175,10 @@ internal class StripeEventWebhookTest {
     fun onReceiveExectuted() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
 
-        val baseHandler = BaseReceiver()
+        val baseHandler = TestReceiver()
 
         assertEquals(
-            ResponseEntity.ok(listOf(ReceiverExecution(BaseReceiver::class.simpleName!!, Unit, null))),
+            ResponseEntity.ok(listOf(ReceiverExecution(TestReceiver::class.simpleName!!, Unit, null))),
             testWebHook(baseHandler).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertTrue(baseHandler.exectuedOnReceive)
@@ -199,34 +227,29 @@ internal class StripeEventWebhookTest {
         }
     }
 
-    class EventTypeReceiver(private val eventType: String) :
-        StripeEventReceiver<Subscription>(Subscription::class.java) {
-
-        var exectuedOnReceive: Boolean = false
+    class TestReceiver(
+        private val onConditionEventType: Boolean = true,
+        private val onConditionStripeObject: Boolean = true,
+        private val onConditionPreviousAttributes: Boolean = true,
+        private val onConditionPreviousAttributesAndStripeObject: Boolean = true,
+    ) : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
         override fun onCondition(eventType: String): Boolean {
-            return eventType == this.eventType
+            return onConditionEventType
         }
 
-        override fun onReceive(stripeObject: Subscription) {
-            exectuedOnReceive = true
+        override fun onCondition(stripeObject: Subscription): Boolean {
+            return onConditionStripeObject
         }
-    }
-
-    class PreviousAttribuesCheck : StripeEventReceiver<Subscription>(Subscription::class.java) {
-
-        var exectuedOnReceive: Boolean = false
 
         override fun onCondition(previousAttributes: Map<String, Any>): Boolean {
-            return false
+            return onConditionPreviousAttributes
         }
 
-        override fun onReceive(stripeObject: Subscription) {
-            exectuedOnReceive = true
+        override fun onCondition(previousAttributes: Map<String, Any>, stripeObject: Subscription): Boolean {
+            return onConditionPreviousAttributesAndStripeObject
         }
-    }
 
-    class BaseReceiver : StripeEventReceiver<Subscription>(Subscription::class.java) {
         var exectuedOnReceive: Boolean = false
 
         override fun onReceive(stripeObject: Subscription) {
