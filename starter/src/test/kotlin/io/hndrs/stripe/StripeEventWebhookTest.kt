@@ -127,11 +127,10 @@ internal class StripeEventWebhookTest {
         assertFalse(invoiceEventHandler.exectuedOnReceive)
     }
 
-    @DisplayName("onCondtion(Event Type String)")
+    @DisplayName("onCondtion(Event)")
     @Test
-    fun onConditionEventType() {
+    fun onConditionEvent() {
         val eventType = "someEventType"
-        val otherEventType = "someOtherEventType"
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>(), eventType)
 
         val testReceiver = TestReceiver(onConditionEventType = false)
@@ -220,7 +219,7 @@ internal class StripeEventWebhookTest {
 
         var exectuedOnReceive: Boolean = false
 
-        override fun onCondition(eventType: String): Boolean {
+        override fun onCondition(event: Event): Boolean {
             throw ex
         }
 
@@ -249,7 +248,7 @@ internal class StripeEventWebhookTest {
         private val onConditionPreviousAttributesAndStripeObject: Boolean = true,
     ) : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
-        override fun onCondition(eventType: String): Boolean {
+        override fun onCondition(event: Event): Boolean {
             return onConditionEventType
         }
 

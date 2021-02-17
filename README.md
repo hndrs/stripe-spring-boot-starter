@@ -35,8 +35,8 @@ There are 3 conditional methods that can be used to narrow the execution conditi
 internal ```class``` conditional that makes sure that the receiver only receives the defined generic type. You can
 override any of the following methods (by default they return true)
 
-- ```onCondition(eventType: String)```
-    - *It is recommended to use this conditional always*
+- ```onCondition(event: Event)```
+    - *It is recommended to use this conditional to check at least the event type*
 - ```onReceive(stripeObject: Subscription)```
     - *It is recommended to use this when your condition **only** needs values from the ```stripeObject``` for your
       business logic
@@ -53,9 +53,9 @@ Implementing a ```StripeEventReceiver``` looks like the following:
 @Component
 open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
-    override fun onCondition(eventType: String): Boolean {
-        // conditional based stripe event type
-        return eventType == "customer.subscription.updated"
+    override fun onCondition(event: Event): Boolean {
+        // conditional based stripe event
+        return event.type == "customer.subscription.updated"
     }
 
     override fun onCondition(stripeObject: Subscription): Boolean {

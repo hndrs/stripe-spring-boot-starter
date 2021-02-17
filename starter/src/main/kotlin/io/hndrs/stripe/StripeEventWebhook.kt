@@ -56,7 +56,7 @@ class StripeEventWebhook(
                 try {
                     if (eventHandler.onCondition(
                             stripeObject.javaClass,
-                            event.type,
+                            event,
                             event.data.previousAttributes,
                             stripeObject
                         )
@@ -116,7 +116,7 @@ abstract class StripeEventReceiver<in T : StripeObject>(private val clazz: Class
     /**
      * Conditional to execute [StripeEventReceiver][onReceive]
      */
-    open fun onCondition(eventType: String): Boolean {
+    open fun onCondition(event: Event): Boolean {
         return true
     }
 
@@ -144,9 +144,9 @@ abstract class StripeEventReceiver<in T : StripeObject>(private val clazz: Class
     /**
      * internal support checks
      */
-    internal fun onCondition(type: Class<Any>, eventType: String, previousAttributes: Map<String, Any?>?, stripeObject: T): Boolean {
+    internal fun onCondition(type: Class<Any>, event: Event, previousAttributes: Map<String, Any?>?, stripeObject: T): Boolean {
         return type == clazz
-                && onCondition(eventType)
+                && onCondition(event)
                 && onCondition(previousAttributes)
                 && onCondition(stripeObject)
                 && onCondition(previousAttributes, stripeObject)

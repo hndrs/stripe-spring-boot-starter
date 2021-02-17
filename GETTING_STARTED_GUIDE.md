@@ -81,9 +81,9 @@ following implementation shows how to do so:
 @Component
 open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::class.java) {
     
-    override fun onCondition(eventType: String): Boolean {
+    override fun onCondition(event: Event): Boolean {
         // check the event type
-        return eventType == "customer.subscription.updated"
+        return event.type == "customer.subscription.updated"
     }
 
     companion object {

@@ -1,5 +1,6 @@
 package io.hndrs.stripe.sample
 
+import com.stripe.model.Event
 import com.stripe.model.Subscription
 import io.hndrs.stripe.StripeEventReceiver
 import org.slf4j.LoggerFactory
@@ -8,9 +9,9 @@ import org.springframework.stereotype.Component
 @Component
 open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
-    override fun onCondition(eventType: String): Boolean {
-        // conditional based stripe event type
-        return eventType == "customer.subscription.updated"
+    override fun onCondition(event: Event): Boolean {
+        // conditional based stripe event
+        return event.type == "customer.subscription.updated"
     }
 
     override fun onCondition(stripeObject: Subscription): Boolean {
