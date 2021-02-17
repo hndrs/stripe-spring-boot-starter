@@ -52,21 +52,22 @@ class StripeEventWebhook(
 
         val stripeObject = event.dataObjectDeserializer.deserializeUnsafe()
         stripeEventReceivers.stream()
-            .forEach { eventHandler ->
+            .forEach { eventReceiver ->
                 try {
-                    if (eventHandler.onCondition(
-                            stripeObject.javaClass,
-                            event,
-                            event.data.previousAttributes,
-                            stripeObject
-                        )
-                    ) {
-                        val result = eventHandler.onReceive(stripeObject, event)
-                        results[eventHandler::class] = result
+                    val evaluationReport = eventReceiver.onCondition(
+                        stripeObject.javaClass,
+                        event,
+                        event.data.previousAttributes,
+                        stripeObject
+                    )
+                    LOG.debug("{} evaluation report: {}", eventReceiver::class.simpleName, evaluationReport)
+                    if (evaluationReport.evaluate()) {
+                        val result = eventReceiver.onReceive(stripeObject, event)
+                        results[eventReceiver::class] = result
                     }
                 } catch (e: Exception) {
-                    exceptions[eventHandler::class] = e
-                    LOG.error("Error while executing {}", eventHandler::class.java.canonicalName)
+                    exceptions[eventReceiver::class] = e
+                    LOG.error("Error while executing {}", eventReceiver::class.java.canonicalName)
                 }
             }
 
@@ -144,14 +145,23 @@ abstract class StripeEventReceiver<in T : StripeObject>(private val clazz: Class
     /**
      * internal support checks
      */
-    internal fun onCondition(type: Class<Any>, event: Event, previousAttributes: Map<String, Any?>?, stripeObject: T): Boolean {
-        return type == clazz
-                && onCondition(event)
-                && onCondition(previousAttributes)
-                && onCondition(stripeObject)
-                && onCondition(previousAttributes, stripeObject)
+    internal fun onCondition(type: Class<Any>, event: Event, previousAttributes: Map<String, Any?>?, stripeObject: T): ConditionEvaluationReport {
+        return ConditionEvaluationReport(
+            type == clazz, onCondition(event), onCondition(previousAttributes), onCondition(stripeObject), onCondition(previousAttributes, stripeObject)
+        )
     }
 
     abstract fun onReceive(stripeObject: T, event: Event): Any?
 
+    data class ConditionEvaluationReport(
+        val onClass: Boolean,
+        val onEvent: Boolean,
+        val onPreviousAttributes: Boolean,
+        val onStripeObject: Boolean,
+        val onPreviousAttributesAndStripeObject: Boolean,
+    ) {
+        fun evaluate(): Boolean {
+            return onClass && onEvent && onPreviousAttributes && onStripeObject && onStripeObject && onPreviousAttributesAndStripeObject
+        }
+    }
 }
