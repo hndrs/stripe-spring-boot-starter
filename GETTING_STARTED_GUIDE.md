@@ -80,20 +80,10 @@ following implementation shows how to do so:
 ```kotlin
 @Component
 open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::class.java) {
-
-    override fun onReceive(stripeObject: Subscription) {
-        LOG.info("Received event {}", stripeObject)
-    }
-
-    override fun supports(eventType: String): Boolean {
+    
+    override fun onCondition(eventType: String): Boolean {
         // check the event type
         return eventType == "customer.subscription.updated"
-    }
-
-
-    override fun supports(previousAttributes: Map<String, Any>): Boolean {
-        // possibility to check previous attributes to check if event should be handled
-        return true
     }
 
     companion object {

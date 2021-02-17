@@ -8,23 +8,29 @@ import org.springframework.stereotype.Component
 @Component
 open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
-    override fun onReceive(stripeObject: Subscription) {
-        LOG.info("Received event {}", stripeObject)
-        stripeObject.toJson()
-    }
-
     override fun onCondition(eventType: String): Boolean {
-        // check the event type
+        // conditional based stripe event type
         return eventType == "customer.subscription.updated"
     }
 
-    override fun onCondition(previousAttributes: Map<String, Any>, stripeObject: Subscription): Boolean {
+    override fun onCondition(stripeObject: Subscription): Boolean {
+        // conditional based stripe object
         return true
     }
 
     override fun onCondition(previousAttributes: Map<String, Any>): Boolean {
-        // possibility to check previous attributes to check if event should be handled
+        // conditional based previousAttributes
         return true
+    }
+
+    override fun onCondition(previousAttributes: Map<String, Any>, stripeObject: Subscription): Boolean {
+        // conditional based previousAttributes and stripe object
+        return true
+    }
+
+    override fun onReceive(stripeObject: Subscription) {
+        LOG.info("Received event {}", stripeObject)
+        stripeObject.toJson()
     }
 
     companion object {
