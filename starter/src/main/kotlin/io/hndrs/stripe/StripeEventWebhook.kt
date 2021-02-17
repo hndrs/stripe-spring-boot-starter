@@ -30,9 +30,11 @@ class StripeEventWebhook(
         @RequestHeader httpHeaders: HttpHeaders,
         @RequestBody body: String
     ): ResponseEntity<*> {
+        LOG.debug("Received event: {}", body)
 
         val sigHeader = httpHeaders["stripe-signature"]?.firstOrNull().orEmpty()
 
+        LOG.debug("Signature: {}", sigHeader)
         // verify signing secret and construct event
         val event = try {
             eventBuilder.constructEvent(

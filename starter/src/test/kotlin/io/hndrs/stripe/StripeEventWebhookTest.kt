@@ -10,6 +10,7 @@ import com.stripe.model.Subscription
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -196,6 +197,14 @@ internal class StripeEventWebhookTest {
             testWebHook(baseHandler).stripeEvents(HttpHeaders(), TEST_BODY)
         )
         assertTrue(baseHandler.exectuedOnReceive)
+    }
+
+    @DisplayName("Evaluation Report")
+    @Test
+    fun evaluationReport() {
+        val evaluationReport = TestReceiver(onConditionEventType = false)
+            .onCondition(Any::class.java, mockk(), mockk(), mockk())
+        assertFalse(evaluationReport.evaluate())
     }
 
     private fun mockkEvent(
