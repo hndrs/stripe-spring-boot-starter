@@ -18,12 +18,12 @@ open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::cla
         return true
     }
 
-    override fun onCondition(previousAttributes: Map<String, Any>): Boolean {
+    override fun onCondition(previousAttributes: Map<String, Any?>?): Boolean {
         // conditional based previousAttributes
         return true
     }
 
-    override fun onCondition(previousAttributes: Map<String, Any>, stripeObject: Subscription): Boolean {
+    override fun onCondition(previousAttributes: Map<String, Any?>?, stripeObject: Subscription): Boolean {
         // conditional based previousAttributes and stripe object
         return true
     }

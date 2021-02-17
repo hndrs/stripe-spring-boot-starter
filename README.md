@@ -40,10 +40,10 @@ override any of the following methods (by default they return true)
 - ```onReceive(stripeObject: Subscription)```
     - *It is recommended to use this when your condition **only** needs values from the ```stripeObject``` for your
       business logic
-- ```onCondition(previousAttributes: Map<String, Any>)```
+- ```onCondition(previousAttributes: Map<String, Any?>?)```
     - *It is recommended to use this conditional when your condition needs **only** values from
       the ```previousAttributes```*
-- ```onCondition(previousAttributes: Map<String, Any>, stripeObject: Subscription)```
+- ```onCondition(previousAttributes: Map<String, Any?>?, stripeObject: Subscription)```
     - *It is recommended to use this conditional when your condition needs a combination of the ```previousAttributes```
       and the received ```stripeObject```*
 

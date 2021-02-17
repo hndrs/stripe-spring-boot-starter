@@ -66,7 +66,22 @@ internal class StripeEventWebhookTest {
 
     @DisplayName("Any exception during supports check")
     @Test
-    fun exceptionDuringSupportsCheck() {
+    fun previousAttributesNull() {
+        every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>(), previousAttributes = null)
+
+        val ex = IllegalStateException()
+        val throwsOnSupport = ThrowsOnSupport(ex)
+
+        assertEquals(
+            ResponseEntity.ok(listOf(ReceiverExecution(ThrowsOnSupport::class.simpleName!!, null, ex.message))),
+            testWebHook(throwsOnSupport).stripeEvents(HttpHeaders(), TEST_BODY)
+        )
+        assertFalse(throwsOnSupport.exectuedOnReceive, "onReceive was executed")
+    }
+
+    @DisplayName("Any exception during supports check")
+    @Test
+    fun exceptionDuringOnCondition() {
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>())
 
         val ex = IllegalStateException()
@@ -187,7 +202,7 @@ internal class StripeEventWebhookTest {
     private fun mockkEvent(
         stripeObject: StripeObject,
         type: String = "anyType",
-        previousAttributes: Map<String, Any> = mapOf()
+        previousAttributes: Map<String, Any>? = mapOf()
     ): Event {
 
         val event = mockk<Event>()
@@ -242,11 +257,11 @@ internal class StripeEventWebhookTest {
             return onConditionStripeObject
         }
 
-        override fun onCondition(previousAttributes: Map<String, Any>): Boolean {
+        override fun onCondition(previousAttributes: Map<String, Any?>?): Boolean {
             return onConditionPreviousAttributes
         }
 
-        override fun onCondition(previousAttributes: Map<String, Any>, stripeObject: Subscription): Boolean {
+        override fun onCondition(previousAttributes: Map<String, Any?>?, stripeObject: Subscription): Boolean {
             return onConditionPreviousAttributesAndStripeObject
         }
 

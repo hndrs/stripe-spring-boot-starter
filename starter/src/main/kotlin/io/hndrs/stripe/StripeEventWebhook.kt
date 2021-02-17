@@ -130,21 +130,21 @@ abstract class StripeEventReceiver<in T : StripeObject>(private val clazz: Class
     /**
      * Conditional to execute [StripeEventReceiver][onReceive]
      */
-    open fun onCondition(previousAttributes: Map<String, Any>): Boolean {
+    open fun onCondition(previousAttributes: Map<String, Any?>?): Boolean {
         return true
     }
 
     /**
      * Conditional to execute [StripeEventReceiver][onReceive]
      */
-    open fun onCondition(previousAttributes: Map<String, Any>, stripeObject: T): Boolean {
+    open fun onCondition(previousAttributes: Map<String, Any?>?, stripeObject: T): Boolean {
         return true
     }
 
     /**
      * internal support checks
      */
-    internal fun onCondition(type: Class<Any>, eventType: String, previousAttributes: Map<String, Any>, stripeObject: T): Boolean {
+    internal fun onCondition(type: Class<Any>, eventType: String, previousAttributes: Map<String, Any?>?, stripeObject: T): Boolean {
         return type == clazz
                 && onCondition(eventType)
                 && onCondition(previousAttributes)
