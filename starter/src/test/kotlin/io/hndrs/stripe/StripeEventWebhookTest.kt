@@ -7,6 +7,7 @@ import com.stripe.model.EventDataObjectDeserializer
 import com.stripe.model.Invoice
 import com.stripe.model.StripeObject
 import com.stripe.model.Subscription
+import io.hndrs.stripe.StripeEventReceiver.ConditionEvaluationReport
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junitpioneer.jupiter.CartesianProductTest
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 
@@ -27,6 +29,16 @@ internal class StripeEventWebhookTest {
 
     companion object {
         private const val TEST_BODY = ""
+
+        @JvmStatic
+        fun booleanFactory(): CartesianProductTest.Sets {
+            return CartesianProductTest.Sets()
+                .add(true, false)
+                .add(true, false)
+                .add(true, false)
+                .add(true, false)
+                .add(true, false)
+        }
     }
 
     private fun testWebHook(stripeEventReceiver: StripeEventReceiver<*>? = null): StripeEventWebhook {
@@ -134,7 +146,7 @@ internal class StripeEventWebhookTest {
         val eventType = "someEventType"
         every { eventBuilder.constructEvent(any(), any(), any()) } returns mockkEvent(mockk<Subscription>(), eventType)
 
-        val testReceiver = TestReceiver(onConditionEventType = false)
+        val testReceiver = TestReceiver(onConditionEvent = false)
 
         assertEquals(
             ResponseEntity.ok(listOf<ReceiverExecution>()),
@@ -200,11 +212,28 @@ internal class StripeEventWebhookTest {
     }
 
     @DisplayName("Evaluation Report")
-    @Test
-    fun evaluationReport() {
-        val evaluationReport = TestReceiver(onConditionEventType = false)
-            .onCondition(Any::class.java, mockk(), mockk(), mockk())
-        assertFalse(evaluationReport.evaluate())
+    @CartesianProductTest(factory = "booleanFactory")
+    fun evaluationReport(
+        onClass: Boolean,
+        onEvent: Boolean,
+        onPreviousAttributes: Boolean,
+        onStripeObject: Boolean,
+        onPreviousAttributesAndStripeObject: Boolean
+    ) {
+
+        val conditionEvaluationReport = ConditionEvaluationReport(onClass, onEvent, onPreviousAttributes, onStripeObject, onPreviousAttributesAndStripeObject)
+
+        assertEquals(onClass,conditionEvaluationReport.onClass)
+        assertEquals(onEvent,conditionEvaluationReport.onEvent)
+        assertEquals(onPreviousAttributes,conditionEvaluationReport.onPreviousAttributes)
+        assertEquals(onStripeObject,conditionEvaluationReport.onStripeObject)
+        assertEquals(onPreviousAttributesAndStripeObject,conditionEvaluationReport.onPreviousAttributesAndStripeObject)
+
+        if (onClass && onEvent && onPreviousAttributes && onStripeObject && onPreviousAttributesAndStripeObject) {
+            assertTrue(conditionEvaluationReport.evaluate())
+        } else {
+            assertFalse(conditionEvaluationReport.evaluate())
+        }
     }
 
     private fun mockkEvent(
@@ -251,14 +280,14 @@ internal class StripeEventWebhookTest {
     }
 
     class TestReceiver(
-        private val onConditionEventType: Boolean = true,
+        private val onConditionEvent: Boolean = true,
         private val onConditionStripeObject: Boolean = true,
         private val onConditionPreviousAttributes: Boolean = true,
         private val onConditionPreviousAttributesAndStripeObject: Boolean = true,
     ) : StripeEventReceiver<Subscription>(Subscription::class.java) {
 
         override fun onCondition(event: Event): Boolean {
-            return onConditionEventType
+            return onConditionEvent
         }
 
         override fun onCondition(stripeObject: Subscription): Boolean {

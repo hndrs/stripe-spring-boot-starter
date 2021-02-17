@@ -14,6 +14,7 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("com.ninja-squad:springmockk:3.0.1")
+    testImplementation("org.junit-pioneer:junit-pioneer:1.3.0")
 }
 
 publishingInfo {
