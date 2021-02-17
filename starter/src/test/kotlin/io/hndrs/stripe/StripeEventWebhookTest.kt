@@ -223,20 +223,20 @@ internal class StripeEventWebhookTest {
             throw ex
         }
 
-        override fun onReceive(stripeObject: Subscription) {
+        override fun onReceive(stripeObject: Subscription, event: Event) {
             exectuedOnReceive = true
         }
     }
 
     class ThrowsOnReceive(private val ex: Exception) : StripeEventReceiver<Subscription>(Subscription::class.java) {
-        override fun onReceive(stripeObject: Subscription) {
+        override fun onReceive(stripeObject: Subscription, event: Event) {
             throw ex
         }
     }
 
     class InvoiceEventReceiver : StripeEventReceiver<Invoice>(Invoice::class.java) {
         var exectuedOnReceive: Boolean = false
-        override fun onReceive(stripeObject: Invoice) {
+        override fun onReceive(stripeObject: Invoice, event: Event) {
             exectuedOnReceive = true
         }
     }
@@ -266,7 +266,7 @@ internal class StripeEventWebhookTest {
 
         var exectuedOnReceive: Boolean = false
 
-        override fun onReceive(stripeObject: Subscription) {
+        override fun onReceive(stripeObject: Subscription, event: Event) {
             exectuedOnReceive = true
         }
 

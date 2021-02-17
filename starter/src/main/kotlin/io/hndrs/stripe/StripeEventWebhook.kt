@@ -61,7 +61,7 @@ class StripeEventWebhook(
                             stripeObject
                         )
                     ) {
-                        val result = eventHandler.onReceive(stripeObject)
+                        val result = eventHandler.onReceive(stripeObject, event)
                         results[eventHandler::class] = result
                     }
                 } catch (e: Exception) {
@@ -152,6 +152,6 @@ abstract class StripeEventReceiver<in T : StripeObject>(private val clazz: Class
                 && onCondition(previousAttributes, stripeObject)
     }
 
-    abstract fun onReceive(stripeObject: T): Any?
+    abstract fun onReceive(stripeObject: T, event: Event): Any?
 
 }

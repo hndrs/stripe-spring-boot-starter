@@ -29,9 +29,8 @@ open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::cla
         return true
     }
 
-    override fun onReceive(stripeObject: Subscription) {
-        LOG.info("Received event {}", stripeObject)
-        stripeObject.toJson()
+    override fun onReceive(stripeObject: Subscription, event: Event) {
+        LOG.info("Received event {}", event)
     }
 
     companion object {
