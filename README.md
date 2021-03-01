@@ -79,5 +79,26 @@ open class ExampleReceiver : StripeEventReceiver<Subscription>(Subscription::cla
 }
 ```
 
-> The ```StripeEventReceiver``` generic needs to be subclass of a [StripeObject](https://github.com/stripe/stripe-java/blob/master/src/main/java/com/stripe/model/StripeObject.java) 
+> The ```StripeEventReceiver``` generic needs to be subclass of a [StripeObject](https://github.com/stripe/stripe-java/blob/master/src/main/java/com/stripe/model/StripeObject.java)
 
+#### Accessing Snapshots
+
+To access [snapshot builds](https://github.com/hndrs/stripe-spring-boot-starter/packages) add the following to your
+gradle script
+
+```kotlin
+maven {
+    url = uri("https://maven.pkg.github.com/hndrs/stripe-spring-boot-starter")
+    credentials {
+        username = "<GITHUB_USERNAME>"
+        password = "<PERSONAL_ACCESS_TOKEN"
+    }
+}
+
+dependencies {
+    implementation(group = "io.hndrs", name = "stripe-spring-boot-starter", version = "1.0.0-SNAPSHOT")
+}
+
+```
+
+> Your personal access token needs the read:packages scope (Download packages from GitHub Package Registry)
