@@ -28,8 +28,10 @@ plugins {
     id("io.hndrs.publishing-info").version("1.1.0").apply(false)
 }
 
+val isRelease = project.hasProperty("release")
+
 group = "io.hndrs"
-version = "1.0.0-1"
+version = "1.0.0".plus(if (isRelease) "" else "-SNAPSHOT")
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 
@@ -101,14 +103,27 @@ subprojects {
 
     publishing {
         repositories {
-            maven {
-                name = "release"
-                url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
-                credentials {
-                    username = System.getenv("SONATYPE_USER")
-                    password = System.getenv("SONATYPE_PASSWORD")
+            if (isRelease) {
+                maven {
+                    name = "release"
+                    url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+                    credentials {
+                        username = System.getenv("SONATYPE_USER")
+                        password = System.getenv("SONATYPE_PASSWORD")
+                    }
+                }
+            } else {
+                maven {
+                    name = "snapshot"
+                    url = uri("https://maven.pkg.github.com/hndrs/stripe-spring-boot-starter")
+                    credentials {
+                        username = System.getenv("GITHUB_ACTOR")
+                        password = System.getenv("GITHUB_TOKEN")
+                    }
                 }
             }
+
+
         }
 
     }
