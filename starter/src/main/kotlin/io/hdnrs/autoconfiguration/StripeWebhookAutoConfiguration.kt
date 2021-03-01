@@ -35,6 +35,8 @@ class StripeConfigurationProperties {
 
     lateinit var signingSecret: String
 
+    var test: String = ""
+
     lateinit var webhookPath: String
 
     companion object {
