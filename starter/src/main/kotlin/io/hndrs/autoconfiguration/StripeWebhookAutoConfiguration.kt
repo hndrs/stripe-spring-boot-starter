@@ -1,8 +1,8 @@
-package io.hdnrs.autoconfiguration
+package io.hndrs.autoconfiguration
 
 import com.stripe.Stripe
 import com.stripe.model.StripeObject
-import io.hdnrs.autoconfiguration.StripeConfigurationProperties.Companion.PROPERTY_PREFIX
+import io.hndrs.autoconfiguration.StripeConfigurationProperties.Companion.PROPERTY_PREFIX
 import io.hndrs.stripe.StripeEventReceiver
 import io.hndrs.stripe.StripeEventWebhook
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass

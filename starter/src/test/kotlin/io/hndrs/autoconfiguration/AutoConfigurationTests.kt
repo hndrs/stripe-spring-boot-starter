@@ -1,7 +1,7 @@
 package io.hndrs.autoconfiguration
 
 import com.stripe.Stripe
-import io.hdnrs.autoconfiguration.StripeWebhookAutoConfiguration
+import io.hndrs.autoconfiguration.StripeWebhookAutoConfiguration
 import io.hndrs.stripe.StripeEventWebhook
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertThrows
